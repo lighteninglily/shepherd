@@ -1,0 +1,30 @@
+[flake8]
+# Maximum line length
+max-line-length = 100
+
+# Exclude directories and files
+exclude = .git,__pycache__,venv,env,.venv,.mypy_cache,.pytest_cache
+
+# Ignore specific errors and warnings
+# E203 - Whitespace before ':' (conflicts with Black formatter)
+# W503 - Line break occurred before a binary operator
+# E501 - Line too long (handled by Black)
+# E231 - Missing whitespace after ',', ';', or ':' (handled by Black)
+# E203 - Whitespace before ':' (handled by Black)
+# W504 - Line break after binary operator (conflicts with W503)
+ignore = E203, W503, E501, E231, W504
+
+# Set the maximum complexity of functions
+max-complexity = 10
+
+# Set the maximum number of arguments for functions
+max-args = 8
+
+# Set the maximum number of statements in functions
+max-statements = 50
+
+# Set the maximum number of branches for functions
+max-branchs = 15
+
+# Set the maximum number of local variables in functions
+max-locals = 15

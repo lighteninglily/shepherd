@@ -1,0 +1,123 @@
+# Replace requirements.txt with the updated version
+Write-Host "Updating requirements.txt..."
+Copy-Item -Path "requirements-updated.txt" -Destination "requirements.txt" -Force
+
+# Install Python dependencies
+Write-Host "Installing Python dependencies..."
+pip install -r requirements.txt
+
+# Initialize SQLite database
+Write-Host "Initializing SQLite database..."
+if (!(Test-Path -Path "instance")) {
+    New-Item -ItemType Directory -Path "instance" | Out-Null
+}
+
+# Create a basic alembic.ini if it doesn't exist
+if (!(Test-Path -Path "alembic.ini")) {
+    @"
+# A generic, single database configuration.
+[alembic]
+# path to migration scripts
+script_location = alembic
+
+# template used to generate migration files
+# file_template = %%(rev)s_%%(slug)s
+
+# sys.path path, will be prepended to sys.path if present.
+# defaults to the current working directory.
+prepend_sys_path = .
+
+# timezone to use when rendering the date within the migration file
+# as well as the filename.
+# If specified, requires the python-dateutil library that can be
+# installed by adding --install-option='--enable-zipl' to the pip
+# command, due to the dependency on the ``dateutil`` library.
+# string value is passed to dateutil.tz.gettz()
+# leave blank for localtime
+# timezone =
+
+# max length of characters to apply to the
+# "slug" field
+# truncate_slug_length = 40
+
+# set to 'true' to run the environment during
+# the 'revision' command, regardless of autogenerate
+# revision_environment = false
+
+# set to 'true' to allow .pyc and .pyo files without
+# a source .py file to be detected as revisions in the
+# versions/ directory
+# sourceless = false
+
+# version location specification; This defaults
+# to alembic/versions.  When using multiple version
+# directories, initial revisions must be specified with --version-path
+# version_locations = %(here)s/bar %(here)s/bat alembic/versions
+
+# the output encoding used when revision files
+# are written from script.py.mako
+# output_encoding = utf-8
+
+sqlalchemy.url = sqlite:///instance/shepherd.db
+
+
+[post_write_hooks]
+# post_write_hooks defines scripts or Python functions that are run
+# on newly generated revision scripts.  See the documentation for further
+# detail and examples
+
+# format using "black" - use the console_scripts runner, against the "black" entrypoint
+# hooks=black
+# black.type=console_scripts
+# black.entrypoint=black
+# black.options=-l 79
+
+# lint with
+# flake8: ensure no Python syntax or logic errors, and code style is up to par
+# isort: sort imports
+# hooks=flake8,isort
+# flake8.type=console_scripts
+# flake8.entrypoint=flake8
+# flake8.options=--max-line-length=100 --ignore=E402,W503,E203
+# isort.type=console_scripts
+# isort.entrypoint=isort
+# isort.options=--profile=black --line-length=100 --ensure-newline-before-comments
+
+# Logging configuration
+[loggers]
+keys = root,sqlalchemy,alembic
+
+[handlers]
+keys = console
+
+[formatters]
+keys = generic
+
+[logger_root]
+level = WARN
+handlers = console
+qualname =
+
+[logger_sqlalchemy]
+level = WARN
+handlers =
+qualname = sqlalchemy.engine
+
+[logger_alembic]
+level = INFO
+handlers =
+qualname = alembic
+
+[handler_console]
+class = StreamHandler
+args = (sys.stderr,)
+level = NOTSET
+formatter = generic
+
+[formatter_generic]
+format = %(levelname)-5.5s [%(name)s] %(message)s
+datefmt = %H:%M:%S
+"@ | Out-File -FilePath "alembic.ini" -Encoding utf8
+}
+
+Write-Host "Setup complete! You can now run the application with SQLite."
