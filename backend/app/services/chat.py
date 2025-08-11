@@ -7,6 +7,7 @@ import urllib.request
 import urllib.error
 import os
 import inspect
+import re
 from pathlib import Path
 
 from ..config import get_settings
@@ -147,6 +148,7 @@ class ChatService:
         """Create a new conversation with DB persistence."""
         from ..models.sql_models import Conversation as SQLConversation
         from ..db.base import SessionLocal, engine
+
         import logging
         import sys
         from sqlalchemy.exc import SQLAlchemyError
@@ -200,6 +202,7 @@ class ChatService:
                     title=title,
                     created_at=datetime.utcnow(),
                     updated_at=datetime.utcnow(),
+                    metadata_json=(metadata or {}),
                 )
 
                 # Add to session and commit
@@ -222,7 +225,7 @@ class ChatService:
                     created_at=db_conversation.created_at,
                     updated_at=db_conversation.updated_at,
                     status="active",
-                    metadata=metadata or {},
+                    metadata=db_conversation.metadata_json or {},
                 )
 
                 print_debug(f"Created Conversation response: {conversation}")
@@ -273,6 +276,7 @@ class ChatService:
                 role=role.value if hasattr(role, "value") else str(role),
                 content=content,
                 created_at=datetime.utcnow(),
+                metadata_json=(metadata or {}),
             )
             db.add(db_msg)
             db.commit()
@@ -284,7 +288,7 @@ class ChatService:
                 role=db_msg.role,
                 content=db_msg.content,
                 created_at=db_msg.created_at,
-                metadata=metadata or {},
+                metadata=db_msg.metadata_json or {},
             )
         finally:
             db.close()
@@ -313,7 +317,7 @@ class ChatService:
                         status="active" if getattr(r, "is_active", True) else "archived",
                         created_at=r.created_at,
                         updated_at=r.updated_at,
-                        metadata={},
+                        metadata=(getattr(r, "metadata_json", None) or {}),
                     )
                 )
             return items, total
@@ -336,7 +340,7 @@ class ChatService:
                 status="active" if getattr(r, "is_active", True) else "archived",
                 created_at=r.created_at,
                 updated_at=r.updated_at,
-                metadata={},
+                metadata=(getattr(r, "metadata_json", None) or {}),
             )
         finally:
             db.close()
@@ -349,7 +353,7 @@ class ChatService:
         status: Optional[ConversationStatus] = None,  # type: ignore[name-defined]
         metadata: Optional[Dict[str, Any]] = None,
     ) -> Conversation:
-        """Update a conversation's title/status. Metadata is accepted but not persisted yet."""
+        """Update a conversation's title/status/metadata."""
         from ..models.sql_models import Conversation as SQLConversation
         from ..db.base import SessionLocal
         db = SessionLocal()
@@ -364,6 +368,11 @@ class ChatService:
             if status is not None:
                 # Map Pydantic status to SQL boolean
                 obj.is_active = True if str(status) == "active" or status == getattr(status, "ACTIVE", None) else False
+            if metadata is not None:
+                current = getattr(obj, "metadata_json", None) or {}
+                # Shallow merge; keys in provided metadata override existing
+                current.update(metadata)
+                obj.metadata_json = current
             obj.updated_at = datetime.utcnow()
             db.add(obj)
             db.commit()
@@ -375,7 +384,7 @@ class ChatService:
                 status="active" if getattr(obj, "is_active", True) else "archived",
                 created_at=obj.created_at,
                 updated_at=obj.updated_at,
-                metadata=metadata or {},
+                metadata=(getattr(obj, "metadata_json", None) or {}),
             )
         finally:
             db.close()
@@ -423,7 +432,7 @@ class ChatService:
                         role=r.role,
                         content=r.content,
                         created_at=r.created_at,
-                        metadata={},
+                        metadata=(getattr(r, "metadata_json", None) or {}),
                     )
                 )
             return items, total
@@ -455,6 +464,24 @@ class ChatService:
             settings = get_settings()
             base_prompt = self.system_prompt
             messages = [{"role": "system", "content": base_prompt}]
+            messages.append({
+                "role": "system",
+                "content": (
+                    "DOMAIN FOCUS: This conversation is strictly about Christian marriage. "
+                    "Frame every response within marriage and marital discipleship. "
+                    "If a request is unrelated, gently refocus to marriage implications or kindly decline and invite a marriage-related topic."
+                )
+            })
+            messages.append({
+                "role": "system",
+                "content": (
+                    "CONVERSATIONAL MODE: Keep replies concise (3–7 sentences). "
+                    "Use brief reflective listening, then end with one open, non-leading question to invite the next turn. "
+                    "Avoid long lists or multi-step plans in the first turn unless asked. "
+                    "Include at most one Scripture (unless declined). "
+                    "Offer one concrete 'do this today' action, then pause and ask permission to go deeper."
+                )
+            })
             # Normalize user content early for downstream heuristics
             lower_msg = (message or "").lower()
 
@@ -472,19 +499,13 @@ class ChatService:
                     "Faith branching: if the user is Christian, lean on Scripture and invite trusted believers and church community; if not Christian, present Scripture as wisdom with a gentle invitation, never pressure."
                 )
 
-                # Topic-aware heuristics (lightweight). Extend as needed.
-                if any(k in lower_msg for k in ["marriage", "married", "husband", "wife", "spouse", "divorce", "separation", "affair", "porn"]):
-                    intake_topic = (
-                        "This appears related to marriage. Ask succinct questions such as: "
-                        "'Are you a husband or a wife?', 'How long have you been married?', 'What is the current state of the relationship?', "
-                        "'Have there been safety concerns (abuse)?', 'Have you sought counseling before?', 'What is your and your spouse's faith background?'. "
-                        "Do not give advice until after the user answers. If the user declines to share, offer gentle, general encouragement from Scripture and invite a conversation with a human pastor."
-                    )
-                else:
-                    intake_topic = (
-                        "If the topic is sensitive or ambiguous (e.g., sexuality, finances, addiction, grief, anxiety, parenting), "
-                        "ask targeted clarifying questions first, then offer practical, biblically grounded steps once context is provided."
-                    )
+                # Marriage-first specialization: always treat topic as marriage
+                intake_topic = (
+                    "This conversation is focused on marriage. Ask succinct questions such as: "
+                    "'Are you a husband or a wife?', 'How long have you been married?', 'What is the current state of the relationship?', "
+                    "'Any safety concerns (abuse)?', 'Have you sought counseling before?', 'What is your and your spouse's faith background?'. "
+                    "Do not give advice until after the user answers. If the user declines to share, offer gentle encouragement from Scripture and invite a conversation with a human pastor."
+                )
 
                 # Greeting-mode gate: for first-message greetings, keep it brief and invitational
                 is_new_convo = not bool(message_history)
@@ -502,8 +523,8 @@ class ChatService:
                         "role": "system",
                         "content": (
                             "GREETING MODE: If the user's first message is only a greeting with no context, "
-                            "respond briefly and warmly (1–2 short sentences), avoid implying heaviness, and ask one open question to invite sharing. "
-                            "Do not list resources at this point."
+                            "respond briefly and warmly (1–2 short sentences), avoid implying heaviness, and ask one open, marriage-oriented question "
+                            "to invite sharing (e.g., 'What would you like help with in your marriage right now?'). Do not list resources at this point."
                         ),
                     })
                 else:
@@ -519,98 +540,97 @@ class ChatService:
                     "porn", "pornography", "accountability", "filter", "filters", "covenant eyes", "lust",
                     "integrity", "sexual integrity", "purity"
                 ]
-                if any(k in lower_msg for k in marriage_triggers):
-                    r = self.topic_rules.get("marriage")
-                    if r:
-                        summary_parts = []
-                        iq = r.get("intake_questions", [])
-                        if iq:
-                            summary_parts.append("Ask these first: " + "; ".join(iq[:6]))
-                        gates = r.get("gates", [])
-                        if gates:
-                            summary_parts.append("Do not advise until gates pass: " + "; ".join(gates[:4]))
-                        adv = r.get("advice_blueprint", [])
-                        if adv:
-                            summary_parts.append("When advising, follow: " + "; ".join(adv[:6]))
-                        tone = r.get("tone", {})
-                        if isinstance(tone, dict) and tone.get("principles"):
-                            summary_parts.append("Tone: " + ", ".join(tone.get("principles")[:5]))
-                        core = r.get("core_commitments", [])
-                        if isinstance(core, list) and core:
-                            summary_parts.append("Core commitments: " + "; ".join(core[:5]))
-                        style = r.get("style", {})
-                        if isinstance(style, dict) and style.get("guidelines"):
-                            summary_parts.append("Style: " + ", ".join(style.get("guidelines")[:3]))
+                r = self.topic_rules.get("marriage")
+                if r:
+                    summary_parts = []
+                    iq = r.get("intake_questions", [])
+                    if iq:
+                        summary_parts.append("Ask these first: " + "; ".join(iq[:6]))
+                    gates = r.get("gates", [])
+                    if gates:
+                        summary_parts.append("Do not advise until gates pass: " + "; ".join(gates[:4]))
+                    adv = r.get("advice_blueprint", [])
+                    if adv:
+                        summary_parts.append("When advising, follow: " + "; ".join(adv[:6]))
+                    tone = r.get("tone", {})
+                    if isinstance(tone, dict) and tone.get("principles"):
+                        summary_parts.append("Tone: " + ", ".join(tone.get("principles")[:5]))
+                    core = r.get("core_commitments", [])
+                    if isinstance(core, list) and core:
+                        summary_parts.append("Core commitments: " + "; ".join(core[:5]))
+                    style = r.get("style", {})
+                    if isinstance(style, dict) and style.get("guidelines"):
+                        summary_parts.append("Style: " + ", ".join(style.get("guidelines")[:3]))
 
-                        # Book insights: surface up to 5 named sources with 1 quick cue + 1 citation each
-                        sources = r.get("book_sources", {})
-                        if isinstance(sources, dict) and sources:
-                            # Prioritize books by detected topic
-                            ordered_items = list(sources.items())
-                            porn_hit = any(k in lower_msg for k in ["porn", "pornography", "lust"])  # reuse
-                            if porn_hit:
-                                priority = [
-                                    "sacred_marriage",  # holiness and transformation
-                                    "from_this_day_forward",  # purity and daily steps
-                                    "the_meaning_of_marriage",  # gospel/covenant frame
-                                ]
-                                ordered_items = sorted(
-                                    sources.items(),
-                                    key=lambda kv: (kv[0] not in priority, priority.index(kv[0]) if kv[0] in priority else 999)
-                                )
+                    # Book insights: surface up to 5 named sources with 1 quick cue + 1 citation each
+                    sources = r.get("book_sources", {})
+                    if isinstance(sources, dict) and sources:
+                        # Prioritize books by detected topic
+                        ordered_items = list(sources.items())
+                        porn_hit = any(k in lower_msg for k in ["porn", "pornography", "lust"])  # reuse
+                        if porn_hit:
+                            priority = [
+                                "sacred_marriage",  # holiness and transformation
+                                "from_this_day_forward",  # purity and daily steps
+                                "the_meaning_of_marriage",  # gospel/covenant frame
+                            ]
+                            ordered_items = sorted(
+                                sources.items(),
+                                key=lambda kv: (kv[0] not in priority, priority.index(kv[0]) if kv[0] in priority else 999)
+                            )
 
-                            book_cues = []
-                            for name, meta in ordered_items[:5]:
-                                pretty = name.replace("_", " ").title()
-                                cue = None
-                                citation = None
-                                if isinstance(meta, dict):
-                                    if meta.get("key_principles"):
-                                        cue = meta["key_principles"][0]
-                                    elif meta.get("principles"):
-                                        cue = meta["principles"][0]
-                                    elif meta.get("core_convictions"):
-                                        cue = meta["core_convictions"][0]
-                                    cits = meta.get("citations") or []
-                                    citation = cits[0] if cits else None
-                                bits = [pretty]
-                                if citation:
-                                    bits.append(f"({citation})")
-                                if cue:
-                                    bits.append(f": {cue}")
-                                book_cues.append(" ".join(bits))
-                            if book_cues:
-                                summary_parts.append("Books: " + " | ".join(book_cues))
-                                summary_parts.append(
-                                    "When offering counsel, explicitly attribute 1–2 insights to the named books (e.g., 'Keller's The Meaning of Marriage highlights…')."
-                                )
+                        book_cues = []
+                        for name, meta in ordered_items[:5]:
+                            pretty = name.replace("_", " ").title()
+                            cue = None
+                            citation = None
+                            if isinstance(meta, dict):
+                                if meta.get("key_principles"):
+                                    cue = meta["key_principles"][0]
+                                elif meta.get("principles"):
+                                    cue = meta["principles"][0]
+                                elif meta.get("core_convictions"):
+                                    cue = meta["core_convictions"][0]
+                                cits = meta.get("citations") or []
+                                citation = cits[0] if cits else None
+                            bits = [pretty]
+                            if citation:
+                                bits.append(f"({citation})")
+                            if cue:
+                                bits.append(f": {cue}")
+                            book_cues.append(" ".join(bits))
+                        if book_cues:
+                            summary_parts.append("Books: " + " | ".join(book_cues))
+                            summary_parts.append(
+                                "When offering counsel, explicitly attribute 1–2 insights to the named books (e.g., 'Keller's The Meaning of Marriage highlights…')."
+                            )
 
-                        # Enforce scripture + decisive action in answers
-                        summary_parts.append(
-                            "Always include exactly one Scripture (unless the user declines) and one specific 'do this today' action."
-                        )
+                    # Enforce scripture + decisive action in answers
+                    summary_parts.append(
+                        "Always include exactly one Scripture (unless the user declines) and one specific 'do this today' action."
+                    )
 
-                        if summary_parts:
-                            messages.append({
-                                "role": "system",
-                                "content": "TOPIC RULES (marriage): " + " | ".join(summary_parts)
-                            })
+                    if summary_parts:
+                        messages.append({
+                            "role": "system",
+                            "content": "TOPIC RULES (marriage): " + " | ".join(summary_parts)
+                        })
 
-                        # Pornography-specific protocol when detected
-                        porn_hit = any(k in lower_msg for k in ["porn", "pornography", "lust"])
-                        proto = r.get("protocols", {}).get("pornography_or_sexual_sin") if r else None
-                        if porn_hit and isinstance(proto, dict):
-                            verses = proto.get("anchor_in_scripture", {}).get("verses", [])
-                            verse_hint = verses[0] if verses else "Romans 8:1"
-                            messages.append({
-                                "role": "system",
-                                "content": (
-                                    "PROTOCOL (pornography/sexual sin): Honour courage; name the sin with grace + truth; "
-                                    f"weave one Scripture (e.g., {verse_hint}); first steps: confession to a trusted brother, "
-                                    "install accountability software/filters today, pray Psalm 51 daily; rebuild trust with transparency and small weekly actions; "
-                                    "offer consent-based forwarding to praying partners."
-                                ),
-                            })
+                    # Pornography-specific protocol when detected
+                    porn_hit = any(k in lower_msg for k in ["porn", "pornography", "lust"])
+                    proto = r.get("protocols", {}).get("pornography_or_sexual_sin") if r else None
+                    if porn_hit and isinstance(proto, dict):
+                        verses = proto.get("anchor_in_scripture", {}).get("verses", [])
+                        verse_hint = verses[0] if verses else "Romans 8:1"
+                        messages.append({
+                            "role": "system",
+                            "content": (
+                                "PROTOCOL (pornography/sexual sin): Honour courage; name the sin with grace + truth; "
+                                f"weave one Scripture (e.g., {verse_hint}); first steps: confession to a trusted brother, "
+                                "install accountability software/filters today, pray Psalm 51 daily; rebuild trust with transparency and small weekly actions; "
+                                "offer consent-based forwarding to praying partners."
+                            ),
+                        })
             except Exception:
                 pass
 
@@ -675,6 +695,65 @@ class ChatService:
                     "model": self.model,
                 },
             )
+            # Update conversation metadata/state
+            try:
+                from ..models.sql_models import Conversation as SQLConversation
+                from ..db.base import SessionLocal
+                db = SessionLocal()
+                try:
+                    conv = db.query(SQLConversation).filter(SQLConversation.id == conversation_id).first()
+                    if conv:
+                        meta = getattr(conv, "metadata_json", None) or {}
+                        # Increment turns
+                        meta["turns"] = int(meta.get("turns", 0)) + 1
+                        # Detect consent for prayer from user message
+                        lm = (message or "").lower()
+                        consent_patterns = [
+                            r"\bplease\s+pray\b",
+                            r"\bpray\s+for\s+me\b",
+                            r"\byes\b.*\bforward\b.*\bprayer\b",
+                            r"\byou\s+can\s+forward\b.*\bprayer\b",
+                        ]
+                        if any(re.search(p, lm) for p in consent_patterns):
+                            meta["consent_for_prayer"] = True
+                        else:
+                            meta["consent_for_prayer"] = bool(meta.get("consent_for_prayer", False))
+                        # Detect last_intent from user message
+                        intent = None
+                        if any(k in lm for k in ["porn", "pornography", "lust", "accountability", "filter", "filters"]):
+                            intent = "sexual_integrity"
+                        elif any(k in lm for k in ["divorce", "separation", "separated"]):
+                            intent = "divorce_or_separation"
+                        elif any(k in lm for k in ["trust", "betrayal", "affair", "adultery"]):
+                            intent = "rebuilding_trust"
+                        elif any(k in lm for k in ["argue", "conflict", "fight", "communication"]):
+                            intent = "communication_conflict"
+                        elif any(k in lm for k in ["pray", "prayer"]):
+                            intent = "prayer_support"
+                        elif any(k in lm for k in ["hello", "hi", "hey", "good morning", "good afternoon", "good evening"]):
+                            intent = "greeting"
+                        if intent:
+                            meta["last_intent"] = intent
+                        # Detect last scripture used from assistant message
+                        am = assistant_message
+                        scripture_match = re.search(r"\b(?:[1-3]\s*)?[A-Za-z]+\s+\d+:\d+(?:-\d+)?\b", am)
+                        if scripture_match:
+                            meta["last_scripture_used"] = scripture_match.group(0)
+                        # Heuristic trust rebuild stage
+                        am_l = am.lower()
+                        if any(k in am_l for k in ["transparency", "weekly actions", "accountability"]):
+                            meta["trust_rebuild_stage"] = "early_repair"
+                        # Intake completion heuristic: after first turn, consider completed
+                        if meta.get("turns", 0) >= 1:
+                            meta["intake_completed"] = True
+                        conv.metadata_json = meta
+                        conv.updated_at = datetime.utcnow()
+                        db.add(conv)
+                        db.commit()
+                finally:
+                    db.close()
+            except Exception as _e:
+                logger.warning("Failed to update conversation metadata: %s", _e)
 
             return assistant_msg
 

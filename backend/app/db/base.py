@@ -45,6 +45,22 @@ def init_db() -> None:
 
     print("Creating database tables...")
     Base.metadata.create_all(bind=engine)
+    # Lightweight migrations for SQLite: ensure metadata columns exist
+    try:
+        if str(engine.url).startswith("sqlite"):
+            with engine.connect() as conn:
+                def col_exists(table: str, col: str) -> bool:
+                    res = conn.execute(f"PRAGMA table_info({table})")
+                    return any(row[1] == col for row in res)
+
+                # conversations.metadata
+                if not col_exists("conversations", "metadata"):
+                    conn.execute("ALTER TABLE conversations ADD COLUMN metadata TEXT")
+                # messages.metadata
+                if not col_exists("messages", "metadata"):
+                    conn.execute("ALTER TABLE messages ADD COLUMN metadata TEXT")
+    except Exception as e:
+        print(f"Warning: SQLite migration step failed: {e}")
     print("Database tables created successfully!")
 
 

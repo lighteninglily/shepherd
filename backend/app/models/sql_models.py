@@ -47,6 +47,8 @@ class Conversation(Base):
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, onupdate=datetime.utcnow, nullable=True)
+    # Arbitrary metadata for conversational state (e.g., intake flags, last_intent)
+    metadata_json = Column("metadata", JSON, default=dict)
 
     # Relationships
     user = relationship("User", back_populates="conversations")
@@ -66,6 +68,8 @@ class Message(Base):
     role = Column(String(20), nullable=False)  # 'user' or 'assistant' or 'system'
     content = Column(Text, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
+    # Optional per-message metadata (e.g., tokens, annotations)
+    metadata_json = Column("metadata", JSON, default=dict)
 
     # Relationships
     conversation = relationship("Conversation", back_populates="messages")
