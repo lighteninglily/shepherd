@@ -455,23 +455,24 @@ class ChatService:
             settings = get_settings()
             base_prompt = self.system_prompt
             messages = [{"role": "system", "content": base_prompt}]
+            # Normalize user content early for downstream heuristics
+            lower_msg = (message or "").lower()
 
             # If strict pastoral mode, instruct intake-first behavior
             if getattr(settings, "PASTORAL_MODE_STRICT", False):
                 intake_general = (
-                    "Begin warmly: 'Thank you for sharing this. I'm sorry this is heavy, and I'm here with you. Let me understand a little more first.' "
-                    "Then ask 2-5 short, compassionate clarifying questions to understand the person's context. "
-                    "If the user indicates crisis or harm risk, avoid advice and gently encourage reaching a trusted human pastor or emergency help. "
-                    "Never provide medical or legal advice. Anchor gently in Scripture, with humility. "
-                    "If the user expresses desire for prayer or you discern it would bless them, OFFER to forward a short request to one of our praying partners (human). "
-                    "Ask for CONSENT to forward and confirm a brief summary in the user's words and their contact preference. "
-                    "When there are safety risks (abuse, self-harm, harm to others), ASK which city/region/country they are in so a human can route local help. "
-                    "Tone: start with validation and empathy; use Reflect + Affirm + Open Questions + Summarize; ask permission before offering steps; keep a gentle, non-judgmental pace. "
-                    "Faith branching: if the user is Christian, lean on Scripture and invite trusted believers and church community; if not Christian, offer practical steps and present Scripture as wisdom with a gentle invitation, never pressure."
+                    "Begin warmly. Thank them for sharing. If they express pain or struggle, acknowledge it briefly with empathy. "
+                    "Ask 2–5 short, compassionate clarifying questions to understand the person's context before advising. "
+                    "Gospel-first: briefly anchor in the good news of Jesus before or alongside practical steps; weave one concise Scripture naturally (e.g., Romans 8:1, Psalm 51) when relevant. "
+                    "Always provide one concrete 'do this today' step, then 1–3 next steps. "
+                    "If the user expresses desire for prayer or you discern it would bless them, OFFER to forward a short request to a praying partner (human) with explicit CONSENT; confirm a brief summary in the user's words and their contact preference. "
+                    "If there are safety risks (abuse, self-harm, harm to others), ASK which city/region/country they are in so a human can route local help; avoid direct advice in crisis. "
+                    "Tone: Reflect + Affirm + Open Questions + Summarize; ask permission before offering steps; keep a gentle, non-judgmental posture. "
+                    "If topic rules are provided in system messages (e.g., marriage), draw explicitly from their principles and Scriptures. "
+                    "Faith branching: if the user is Christian, lean on Scripture and invite trusted believers and church community; if not Christian, present Scripture as wisdom with a gentle invitation, never pressure."
                 )
 
                 # Topic-aware heuristics (lightweight). Extend as needed.
-                lower_msg = (message or "").lower()
                 if any(k in lower_msg for k in ["marriage", "married", "husband", "wife", "spouse", "divorce", "separation", "affair", "porn"]):
                     intake_topic = (
                         "This appears related to marriage. Ask succinct questions such as: "
@@ -485,23 +486,40 @@ class ChatService:
                         "ask targeted clarifying questions first, then offer practical, biblically grounded steps once context is provided."
                     )
 
-                messages.append({
-                    "role": "system",
-                    "content": f"INTAKE INSTRUCTION: {intake_general} {intake_topic}",
-                })
+                # Greeting-mode gate: for first-message greetings, keep it brief and invitational
+                is_new_convo = not bool(message_history)
+                lower_stripped = lower_msg.strip()
+                greeting_terms = [
+                    "hi", "hello", "hey", "yo", "good morning", "good afternoon", "good evening",
+                    "shalom", "greetings"
+                ]
+                is_greeting = is_new_convo and any(
+                    lower_stripped == t or lower_stripped.startswith(t + " ") for t in greeting_terms
+                )
 
-            # Add message history if provided
-            if message_history:
-                messages.extend(message_history)
+                if is_greeting:
+                    messages.append({
+                        "role": "system",
+                        "content": (
+                            "GREETING MODE: If the user's first message is only a greeting with no context, "
+                            "respond briefly and warmly (1–2 short sentences), avoid implying heaviness, and ask one open question to invite sharing. "
+                            "Do not list resources at this point."
+                        ),
+                    })
+                else:
+                    messages.append({
+                        "role": "system",
+                        "content": f"INTAKE INSTRUCTION: {intake_general} {intake_topic}",
+                    })
 
-            # Add the new user message
-            messages.append({"role": "user", "content": message})
-
-            # If marriage topic and rules registry exists, include concise rule summary
+            # Inject topic rules and specific protocols BEFORE history/user so the model conditions on them
             try:
-                if any(k in (message or "").lower() for k in [
-                    "marriage", "married", "husband", "wife", "spouse", "divorce", "separation", "affair", "porn"
-                ]):
+                marriage_triggers = [
+                    "marriage", "married", "husband", "wife", "spouse", "divorce", "separation", "affair",
+                    "porn", "pornography", "accountability", "filter", "filters", "covenant eyes", "lust",
+                    "integrity", "sexual integrity", "purity"
+                ]
+                if any(k in lower_msg for k in marriage_triggers):
                     r = self.topic_rules.get("marriage")
                     if r:
                         summary_parts = []
@@ -517,22 +535,91 @@ class ChatService:
                         tone = r.get("tone", {})
                         if isinstance(tone, dict) and tone.get("principles"):
                             summary_parts.append("Tone: " + ", ".join(tone.get("principles")[:5]))
-                        sources = r.get("book_sources", {})
-                        if isinstance(sources, dict) and sources:
-                            summary_parts.append("Use sources: " + ", ".join(list(sources.keys())[:3]))
                         core = r.get("core_commitments", [])
                         if isinstance(core, list) and core:
-                            summary_parts.append("Core commitments: " + "; ".join(core[:7]))
+                            summary_parts.append("Core commitments: " + "; ".join(core[:5]))
                         style = r.get("style", {})
                         if isinstance(style, dict) and style.get("guidelines"):
                             summary_parts.append("Style: " + ", ".join(style.get("guidelines")[:3]))
+
+                        # Book insights: surface up to 5 named sources with 1 quick cue + 1 citation each
+                        sources = r.get("book_sources", {})
+                        if isinstance(sources, dict) and sources:
+                            # Prioritize books by detected topic
+                            ordered_items = list(sources.items())
+                            porn_hit = any(k in lower_msg for k in ["porn", "pornography", "lust"])  # reuse
+                            if porn_hit:
+                                priority = [
+                                    "sacred_marriage",  # holiness and transformation
+                                    "from_this_day_forward",  # purity and daily steps
+                                    "the_meaning_of_marriage",  # gospel/covenant frame
+                                ]
+                                ordered_items = sorted(
+                                    sources.items(),
+                                    key=lambda kv: (kv[0] not in priority, priority.index(kv[0]) if kv[0] in priority else 999)
+                                )
+
+                            book_cues = []
+                            for name, meta in ordered_items[:5]:
+                                pretty = name.replace("_", " ").title()
+                                cue = None
+                                citation = None
+                                if isinstance(meta, dict):
+                                    if meta.get("key_principles"):
+                                        cue = meta["key_principles"][0]
+                                    elif meta.get("principles"):
+                                        cue = meta["principles"][0]
+                                    elif meta.get("core_convictions"):
+                                        cue = meta["core_convictions"][0]
+                                    cits = meta.get("citations") or []
+                                    citation = cits[0] if cits else None
+                                bits = [pretty]
+                                if citation:
+                                    bits.append(f"({citation})")
+                                if cue:
+                                    bits.append(f": {cue}")
+                                book_cues.append(" ".join(bits))
+                            if book_cues:
+                                summary_parts.append("Books: " + " | ".join(book_cues))
+                                summary_parts.append(
+                                    "When offering counsel, explicitly attribute 1–2 insights to the named books (e.g., 'Keller's The Meaning of Marriage highlights…')."
+                                )
+
+                        # Enforce scripture + decisive action in answers
+                        summary_parts.append(
+                            "Always include exactly one Scripture (unless the user declines) and one specific 'do this today' action."
+                        )
+
                         if summary_parts:
                             messages.append({
                                 "role": "system",
                                 "content": "TOPIC RULES (marriage): " + " | ".join(summary_parts)
                             })
+
+                        # Pornography-specific protocol when detected
+                        porn_hit = any(k in lower_msg for k in ["porn", "pornography", "lust"])
+                        proto = r.get("protocols", {}).get("pornography_or_sexual_sin") if r else None
+                        if porn_hit and isinstance(proto, dict):
+                            verses = proto.get("anchor_in_scripture", {}).get("verses", [])
+                            verse_hint = verses[0] if verses else "Romans 8:1"
+                            messages.append({
+                                "role": "system",
+                                "content": (
+                                    "PROTOCOL (pornography/sexual sin): Honour courage; name the sin with grace + truth; "
+                                    f"weave one Scripture (e.g., {verse_hint}); first steps: confession to a trusted brother, "
+                                    "install accountability software/filters today, pray Psalm 51 daily; rebuild trust with transparency and small weekly actions; "
+                                    "offer consent-based forwarding to praying partners."
+                                ),
+                            })
             except Exception:
                 pass
+
+            # Add message history if provided
+            if message_history:
+                messages.extend(message_history)
+
+            # Add the new user message
+            messages.append({"role": "user", "content": message})
 
             # Preflight: verify key works by calling list models (helps diagnose 401)
             try:

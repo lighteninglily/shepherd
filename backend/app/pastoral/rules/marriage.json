@@ -249,14 +249,30 @@
       "key_principles": [
         "Live as if heaven is near and your time is short.",
         "Pursue God more than you pursue each other — intimacy flows from shared pursuit of Christ.",
-        "Let your marriage be a platform for mission, not an idol."
+        "Let your marriage be a platform for mission, not an idol.",
+        "Eternity Changes Everything — petty conflicts lose power with an eternal perspective.",
+        "Mission-Driven Marriage — ask: How can we serve Jesus better together than apart?",
+        "Sacrificial Love — model Christ’s self-giving love."
       ],
       "practical_patterns": [
         "Serve in ministry together.",
         "Pray and fast for Kingdom purposes.",
-        "Make decisions based on eternal impact, not just comfort."
+        "Make decisions based on eternal impact, not just comfort.",
+        "Commit to daily prayer and Scripture reading together.",
+        "Simplify life to free time, energy, and money for God’s mission."
       ],
-      "citations": ["Ephesians 5:21-33", "Romans 12"]
+      "citations": [
+        "Ephesians 5:25-33",
+        "1 Corinthians 7:29-31",
+        "Philippians 1:21",
+        "Matthew 6:33"
+      ],
+      "author_tone": "Urgent, passionate, Christ-centered; challenges cultural Christianity.",
+      "ai_use_cases": [
+        "Couples stuck in trivial fights — shift focus to mission.",
+        "When a couple asks about the purpose of marriage.",
+        "Spiritually stagnant couples — inspire eternal focus."
+      ]
     },
     "love_and_respect": {
       "principles": [
@@ -270,14 +286,24 @@
       ],
       "key_principles": [
         "Speak to your spouse’s core need, even when you feel they don’t deserve it.",
-        "Break cycles by giving what you tend to withhold."
+        "Break cycles by giving what you tend to withhold.",
+        "The Crazy Cycle — without love she reacts without respect; without respect he reacts without love.",
+        "The Energizing Cycle — his love motivates her respect; her respect motivates his love.",
+        "Unconditional Love and Respect — given regardless of the other’s behaviour."
       ],
       "practical_patterns": [
         "Husbands: express affection, listen, protect, and value your wife.",
         "Wives: express admiration, trust, and appreciation for your husband.",
-        "In conflict ask: ‘Am I meeting their core need right now?’"
+        "In conflict ask: ‘Am I meeting their core need right now?’",
+        "Husbands: learn your wife’s love language; listen without fixing immediately.",
+        "Wives: avoid belittling; practise respectful language."
       ],
-      "citations": ["Ephesians 5:33"]
+      "citations": ["Ephesians 5:22-33", "1 Peter 3:1-7"],
+      "author_tone": "Direct, practical; structured around gender differences.",
+      "ai_use_cases": [
+        "When a spouse says: I don’t feel loved/respected.",
+        "When communication has broken down due to reaction cycles."
+      ]
     },
     "crazy_love": {
       "principles": [
@@ -302,14 +328,24 @@
       "key_principles": [
         "Love is a commitment to serve and sacrifice.",
         "Marriage is about growing in holiness together.",
-        "Vulnerability builds trust; selfishness destroys it."
+        "Vulnerability builds trust; selfishness destroys it.",
+        "Covenant vs. Contract — self-giving vs. self-protective love.",
+        "Spiritual Friendship — primary friendship that encourages holiness.",
+        "Sex deepens the covenant bond, not merely physical pleasure."
       ],
       "practical_patterns": [
         "Confess and repent regularly.",
         "Treat your spouse with grace and truth as Christ treats the Church.",
-        "Keep the covenant even when feelings fade."
+        "Keep the covenant even when feelings fade.",
+        "Schedule intentional time to nurture friendship.",
+        "See conflict as a chance to grow in Christlikeness."
       ],
-      "citations": ["Ephesians 5:21-33", "Genesis 2:24"]
+      "citations": ["Genesis 2:18-25", "Ephesians 5:21-33", "1 Corinthians 13"],
+      "author_tone": "Theological yet warm; pastoral with intellectual depth.",
+      "ai_use_cases": [
+        "Couples exploring the biblical meaning of marriage.",
+        "When a spouse feels the marriage is just a contract."
+      ]
     },
     "sacred_marriage": {
       "principles": [
@@ -328,9 +364,15 @@
       "practical_patterns": [
         "Respond to irritation with patience.",
         "Use conflict to examine your own heart before criticising.",
-        "Invite God into ordinary daily moments, not just crisis points."
+        "Invite God into ordinary daily moments, not just crisis points.",
+        "Pray for God to show your faults, not only your spouse’s."
       ],
-      "citations": ["James 1:2-4", "Romans 8:29"]
+      "citations": ["James 1:2-4", "Philippians 2:3-4", "1 Corinthians 13:4-7", "Romans 8:29"],
+      "author_tone": "Challenging, reflective, spiritually formative.",
+      "ai_use_cases": [
+        "Couples disillusioned by hardship.",
+        "Encourage a growth mindset in conflict seasons."
+      ]
     },
     "cherish": {
       "principles": [
@@ -351,7 +393,12 @@
         "Avoid comparisons with others.",
         "Protect your spouse’s dignity in public and private."
       ],
-      "citations": ["Proverbs 31", "Song of Songs"]
+      "citations": ["Song of Songs 4:9-10", "Proverbs 31:10", "Philippians 2:3-4"],
+      "author_tone": "Gentle, romantic, practical with a spiritual lens.",
+      "ai_use_cases": [
+        "When a marriage feels flat and needs joy restored.",
+        "When a spouse feels taken for granted."
+      ]
     },
     "marriage_on_the_rock": {
       "principles": [
@@ -373,7 +420,12 @@
         "Guard time together from overcommitment.",
         "Unite on finances and parenting."
       ],
-      "citations": ["Colossians 3:12-17"]
+      "citations": ["Matthew 7:24-27", "Ephesians 5:25-33", "Genesis 2:24", "Hebrews 13:4", "Colossians 3:12-17"],
+      "author_tone": "Direct, motivational, application-focused.",
+      "ai_use_cases": [
+        "Couples drifting due to misplaced priorities.",
+        "Premarital prep or marriage reset."
+      ]
     },
     "from_this_day_forward": {
       "principles": [
@@ -394,9 +446,16 @@
       "practical_patterns": [
         "Pray together daily.",
         "Schedule regular date nights.",
-        "Apologise quickly and forgive fully."
+        "Apologise quickly and forgive fully.",
+        "Use time-outs during heated arguments.",
+        "Schedule both serious and silly connection time."
       ],
-      "citations": ["Philippians 2:3-5"]
+      "citations": ["Matthew 19:6", "James 1:19-20", "1 Corinthians 13:4-7", "Philippians 2:3-5"],
+      "author_tone": "Modern, relatable, very practical.",
+      "ai_use_cases": [
+        "Couples wanting easy-to-follow commitments.",
+        "Re-establishing connection and joy."
+      ]
     },
     "the_mingling_of_souls": {
       "principles": [
@@ -417,7 +476,12 @@
         "Keep sex connected to covenant love, not performance.",
         "Guard against pornography and fantasy."
       ],
-      "citations": ["Song of Songs", "1 Thessalonians 4:3-4"]
+      "citations": ["Song of Songs 8:6-7", "Proverbs 5:18-19", "Hebrews 13:4", "1 Thessalonians 4:3-4"],
+      "author_tone": "Biblical exposition with cultural application.",
+      "ai_use_cases": [
+        "Couples struggling with intimacy.",
+        "Premarital counselling on God’s design for sex."
+      ]
     },
     "what_did_you_expect": {
       "principles": [
@@ -438,7 +502,12 @@
         "Listen before defending yourself.",
         "Make repentance a habit, not a rare event."
       ],
-      "citations": ["James 4:1-3", "Ephesians 4"]
+      "citations": ["James 4:1-2", "Romans 12:18", "Matthew 7:3-5", "Ephesians 4:2-3", "Colossians 3:13"],
+      "author_tone": "Honest, convicting, grace-filled.",
+      "ai_use_cases": [
+        "Couples blaming each other.",
+        "When bitterness or disillusionment has set in."
+      ]
     },
     "when_sinners_say_i_do": {
       "principles": [
@@ -457,7 +526,12 @@
         "Pray together when you sin against each other.",
         "Use conflict as a chance to show mercy."
       ],
-      "citations": ["Colossians 3:13", "Ephesians 4:32"]
+      "citations": ["Romans 5:8", "James 5:16", "Ephesians 4:32", "Matthew 18:21-35", "Colossians 3:13"],
+      "author_tone": "Gospel-saturated, realistic, pastoral.",
+      "ai_use_cases": [
+        "Couples stuck in cycles of unforgiveness.",
+        "When conflict feels overwhelming."
+      ]
     },
     "boundaries_in_marriage": {
       "principles": [
@@ -477,7 +551,12 @@
         "Define acceptable and unacceptable treatment.",
         "Protect marriage from unhealthy outside influence."
       ],
-      "citations": ["Proverbs 4:23", "Matthew 18"]
+      "citations": ["Galatians 6:5", "Proverbs 4:23", "Matthew 18:15-17", "Ephesians 4:25", "Proverbs 27:17"],
+      "author_tone": "Therapeutic but biblically anchored.",
+      "ai_use_cases": [
+        "Overreach, control, or outside interference issues.",
+        "Teaching responsibility with love."
+      ]
     },
     "the_four_laws_of_love": {
       "principles": [
@@ -496,7 +575,11 @@
         "Eliminate secret-keeping.",
         "Share dreams and goals regularly."
       ],
-      "citations": ["Genesis 2:24"]
+      "citations": ["Genesis 2:24", "Ephesians 5:31-33", "Colossians 3:14", "1 Corinthians 13:4-7"],
+      "author_tone": "Encouraging, motivational, with actionable steps.",
+      "ai_use_cases": [
+        "Couples needing a clear framework to protect and grow love."
+      ]
     }
   },
   "scriptures": [
