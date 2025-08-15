@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 from fastapi import Depends, HTTPException, status
@@ -57,8 +57,8 @@ class AuthService:
             is_active=True,
             is_verified=False,
             is_superuser=False,
-            created_at=datetime.utcnow(),
-            updated_at=datetime.utcnow(),
+            created_at=datetime.now(timezone.utc),
+            updated_at=datetime.now(timezone.utc),
         )
         self.db.add(db_user)
         self.db.commit()
@@ -122,7 +122,7 @@ class AuthService:
         from ..models.sql_models import User as SQLUser
         db_user = self.db.query(SQLUser).filter(SQLUser.email == user.email).first()
         if db_user:
-            db_user.last_login = datetime.utcnow()
+            db_user.last_login = datetime.now(timezone.utc)
             self.db.commit()
         # Create tokens
         access_token = create_access_token(

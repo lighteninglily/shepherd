@@ -1,8 +1,8 @@
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
-from typing import List
-from datetime import datetime
-from app.services.chat import get_chat_service
+from pydantic import BaseModel, ConfigDict
+from typing import List, Optional, Dict, Any
+from datetime import datetime, timezone
+from ....services.chat import get_chat_service
 
 router = APIRouter(prefix="/chat", tags=["chat"])
 
@@ -14,16 +14,15 @@ class Message(BaseModel):
     role: str  # 'user' or 'assistant'
     content: str
     timestamp: datetime = None
+    metadata: Optional[Dict[str, Any]] = None
 
-    class Config:
-        json_encoders = {
-            datetime: lambda v: v.isoformat()
-        }
+    model_config = ConfigDict()
 
 
 class ChatRequest(BaseModel):
     messages: List[Message]
     user_id: str
+    conversation_id: Optional[str] = None
 
 
 class ChatResponse(BaseModel):
@@ -50,34 +49,59 @@ async def chat(chat_request: ChatRequest):
         # Initialize chat service
         chat_service = get_chat_service()
 
-        # Create a conversation per request (can be optimized to reuse later)
-        conversation = await chat_service.create_conversation(user_id=chat_request.user_id)
+        # Resolve or create conversation
+        if chat_request.conversation_id:
+            conversation_id = chat_request.conversation_id
+        else:
+            conversation = await chat_service.create_conversation(user_id=chat_request.user_id)
+            conversation_id = conversation.id
 
-        # Prepare message history excluding the last user message
-        history: List[dict] = []
-        if len(chat_request.messages) > 1:
-            for m in chat_request.messages[:-1]:
-                # Only pass role/content to the model
-                history.append({"role": m.role, "content": m.content})
+        # Persist the new user message to DB
+        await chat_service.add_message(
+            conversation_id=conversation_id,
+            user_id=chat_request.user_id,
+            content=last_message.content,
+            role="user",
+        )
+
+        # Build DB-backed message history (exclude the last user message we just saved)
+        history_items, total = await chat_service.get_conversation_history(conversation_id)
+        history_payload: List[dict] = []
+        # Exclude the last item if it's the user message we just added
+        trimmed = history_items[:-1] if total > 0 else []
+        for m in trimmed:
+            # Normalize role to a raw string for downstream logic
+            r = None
+            try:
+                r = m.role.value  # Enum -> value
+            except Exception:
+                r = m.role
+            if isinstance(r, str):
+                r = r.lower()
+                # Handle possible Enum string representation like "MessageRole.ASSISTANT"
+                if "." in r:
+                    r = r.split(".")[-1]
+            history_payload.append({"role": r, "content": m.content})
 
         # Generate assistant response via OpenAI
         assistant_msg = await chat_service.generate_response(
-            conversation_id=conversation.id,
+            conversation_id=conversation_id,
             user_id=chat_request.user_id,
             message=last_message.content,
-            message_history=history or None,
+            message_history=history_payload or None,
         )
 
         # Map to API response model expected by frontend
         response_message = Message(
             role="assistant",
             content=assistant_msg.content,
-            timestamp=getattr(assistant_msg, "created_at", None) or datetime.utcnow(),
+            timestamp=getattr(assistant_msg, "created_at", None) or datetime.now(timezone.utc),
+            metadata=getattr(assistant_msg, "metadata", None) or {},
         )
 
         return {
             "message": response_message,
-            "conversation_id": conversation.id,
+            "conversation_id": conversation_id,
         }
 
     except Exception as e:

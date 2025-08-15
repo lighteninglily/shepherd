@@ -1,12 +1,12 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
-from app.config import get_settings
-from app.db.base import SessionLocal
-from app.models.sql_models import PrayerRequest as SQLPrayerRequest
+from ....config import get_settings
+from ....db.base import SessionLocal
+from ....models.sql_models import PrayerRequest as SQLPrayerRequest
 
 import json
 import urllib.request
@@ -53,7 +53,7 @@ async def create_prayer_request(body: PrayerRequestBody):
             location_region=body.location_region,
             location_city=body.location_city,
             metadata_json=body.metadata or {},
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(timezone.utc),
         )
         db.add(obj)
         db.commit()

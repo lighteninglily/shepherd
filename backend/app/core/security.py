@@ -1,5 +1,5 @@
 import os
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, Optional
 
 from dotenv import load_dotenv
@@ -10,7 +10,7 @@ from passlib.context import CryptContext
 from sqlalchemy.orm import Session
 
 from ..db.base import get_db
-from ..models.user import TokenData, UserInDB
+from ..models.user import TokenData, User, UserInDB
 
 # Load environment variables
 load_dotenv()
@@ -65,9 +65,9 @@ def create_access_token(data: Dict[str, Any], expires_delta: Optional[timedelta]
     """
     to_encode = data.copy()
     if expires_delta:
-        expire = datetime.utcnow() + expires_delta
+        expire = datetime.now(timezone.utc) + expires_delta
     else:
-        expire = datetime.utcnow() + timedelta(minutes=15)
+        expire = datetime.now(timezone.utc) + timedelta(minutes=15)
     to_encode.update({"exp": expire, "type": "access"})
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
@@ -84,9 +84,9 @@ def create_refresh_token(data: Dict[str, Any], expires_delta: Optional[timedelta
     """
     to_encode = data.copy()
     if expires_delta:
-        expire = datetime.utcnow() + expires_delta
+        expire = datetime.now(timezone.utc) + expires_delta
     else:
-        expire = datetime.utcnow() + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
+        expire = datetime.now(timezone.utc) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
     to_encode.update({"exp": expire, "type": "refresh"})
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
@@ -121,7 +121,7 @@ def verify_token(token: str) -> Dict[str, Any]:
 
 async def get_current_user(
     token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)
-) -> UserInDB:
+) -> User:
     """Get the current user from the JWT token.
 
     Args:
@@ -155,17 +155,14 @@ async def get_current_user(
     if db_user is None:
         raise credentials_exception
 
-    # Convert to UserInDB model
-    user = UserInDB(
+    # Convert to API User model (id as string for consistency across endpoints)
+    user = User(
         id=db_user.id,
         email=db_user.email,
-        hashed_password=db_user.hashed_password,
         is_active=db_user.is_active,
         is_verified=db_user.is_verified,
         is_superuser=db_user.is_superuser,
         last_login=db_user.last_login,
-        created_at=db_user.created_at,
-        updated_at=db_user.updated_at
     )
 
     if user is None:
@@ -174,8 +171,8 @@ async def get_current_user(
 
 
 async def get_current_active_user(
-    current_user: UserInDB = Depends(get_current_user),
-) -> UserInDB:
+    current_user: User = Depends(get_current_user),
+) -> User:
     """Get the current active user.
 
     Args:

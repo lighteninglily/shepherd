@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import List, Literal, Optional
 
-from pydantic import EmailStr, Field, validator
+from pydantic import EmailStr, Field, field_validator, ConfigDict
 
 from .base import BaseDBModel
 
@@ -15,8 +15,7 @@ class UserBase(BaseDBModel):
     is_superuser: bool = False
     last_login: Optional[datetime] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class UserCreate(UserBase):
@@ -24,7 +23,7 @@ class UserCreate(UserBase):
 
     password: str = Field(..., min_length=8, max_length=100)
 
-    @validator("password")
+    @field_validator("password")
     def validate_password_strength(cls, v):
         if len(v) < 8:
             raise ValueError("Password must be at least 8 characters")
@@ -57,11 +56,7 @@ class User(UserBase):
 
     id: str  # Override to return string representation of UUID
 
-    class Config:
-        from_attributes = True
-        json_encoders = {
-            **BaseDBModel.Config.json_encoders,
-        }
+    model_config = ConfigDict(from_attributes=True)
 
 
 class UserLogin(BaseDBModel):

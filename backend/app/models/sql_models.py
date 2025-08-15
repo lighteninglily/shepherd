@@ -1,8 +1,8 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from uuid import uuid4
 
 from sqlalchemy import JSON, Boolean, Column, DateTime, ForeignKey, Integer, String, Text
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import declarative_base
 from sqlalchemy.orm import relationship
 
 # Base class for SQLAlchemy models
@@ -11,6 +11,11 @@ Base = declarative_base()
 
 def generate_uuid():
     return str(uuid4())
+
+
+def now_utc() -> datetime:
+    """Timezone-aware UTC now for SQLAlchemy defaults and onupdate."""
+    return datetime.now(timezone.utc)
 
 
 class User(Base):
@@ -24,9 +29,9 @@ class User(Base):
     is_active = Column(Boolean, default=True)
     is_verified = Column(Boolean, default=False)
     is_superuser = Column(Boolean, default=False)
-    last_login = Column(DateTime, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, onupdate=datetime.utcnow, nullable=True)
+    last_login = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), default=now_utc)
+    updated_at = Column(DateTime(timezone=True), onupdate=now_utc, nullable=True)
 
     # Relationships
     conversations = relationship("Conversation", back_populates="user")
@@ -45,8 +50,8 @@ class Conversation(Base):
     user_id = Column(String(36), ForeignKey("users.id"), nullable=False)
     title = Column(String(255), nullable=False)
     is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, onupdate=datetime.utcnow, nullable=True)
+    created_at = Column(DateTime(timezone=True), default=now_utc)
+    updated_at = Column(DateTime(timezone=True), onupdate=now_utc, nullable=True)
     # Arbitrary metadata for conversational state (e.g., intake flags, last_intent)
     metadata_json = Column("metadata", JSON, default=dict)
 
@@ -67,7 +72,7 @@ class Message(Base):
     conversation_id = Column(String(36), ForeignKey("conversations.id"), nullable=False)
     role = Column(String(20), nullable=False)  # 'user' or 'assistant' or 'system'
     content = Column(Text, nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime(timezone=True), default=now_utc)
     # Optional per-message metadata (e.g., tokens, annotations)
     metadata_json = Column("metadata", JSON, default=dict)
 
@@ -89,8 +94,8 @@ class Prayer(Base):
     content = Column(Text, nullable=False)
     is_answered = Column(Boolean, default=False)
     is_public = Column(Boolean, default=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, onupdate=datetime.utcnow, nullable=True)
+    created_at = Column(DateTime(timezone=True), default=now_utc)
+    updated_at = Column(DateTime(timezone=True), onupdate=now_utc, nullable=True)
 
     # Relationships
     user = relationship("User", back_populates="prayers")
@@ -149,8 +154,8 @@ class PrayerRequest(Base):
     location_city = Column(String(100), nullable=True)
     # Arbitrary extra data: risk flags, contact preference, etc.
     metadata_json = Column("metadata", JSON, default=dict)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, onupdate=datetime.utcnow, nullable=True)
+    created_at = Column(DateTime(timezone=True), default=now_utc)
+    updated_at = Column(DateTime(timezone=True), onupdate=now_utc, nullable=True)
 
     def __repr__(self):
         return f"<PrayerRequest(id='{self.id}', title='{self.title}', consent_forward={self.consent_forward})>"

@@ -2,8 +2,8 @@ import os
 from typing import Generator
 
 from dotenv import load_dotenv
-from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy import create_engine, text
+from sqlalchemy.orm import declarative_base
 from sqlalchemy.orm import scoped_session, sessionmaker
 
 # Load environment variables
@@ -50,15 +50,16 @@ def init_db() -> None:
         if str(engine.url).startswith("sqlite"):
             with engine.connect() as conn:
                 def col_exists(table: str, col: str) -> bool:
-                    res = conn.execute(f"PRAGMA table_info({table})")
-                    return any(row[1] == col for row in res)
+                    res = conn.execute(text(f"PRAGMA table_info({table})"))
+                    rows = res.fetchall()
+                    return any(r[1] == col for r in rows)
 
                 # conversations.metadata
                 if not col_exists("conversations", "metadata"):
-                    conn.execute("ALTER TABLE conversations ADD COLUMN metadata TEXT")
+                    conn.execute(text("ALTER TABLE conversations ADD COLUMN metadata TEXT"))
                 # messages.metadata
                 if not col_exists("messages", "metadata"):
-                    conn.execute("ALTER TABLE messages ADD COLUMN metadata TEXT")
+                    conn.execute(text("ALTER TABLE messages ADD COLUMN metadata TEXT"))
     except Exception as e:
         print(f"Warning: SQLite migration step failed: {e}")
     print("Database tables created successfully!")

@@ -1,1 +1,4 @@
 .next/
+.turbo/
+
+.next-dev/

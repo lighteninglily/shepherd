@@ -268,6 +268,23 @@
         "Matthew 6:33"
       ],
       "author_tone": "Urgent, passionate, Christ-centered; challenges cultural Christianity.",
+      "chapter_themes": [
+        "Marriage in light of eternity",
+        "Mission-first marriage",
+        "Parenting and discipleship",
+        "Generosity and simplicity for the Kingdom"
+      ],
+      "diagnostics": [
+        "If eternity is real, how should our marriage week look different?",
+        "How are we making disciples together right now?",
+        "What comforts are crowding out mission?"
+      ],
+      "memorable_quotes": [
+        {
+          "text": "Marriage is great, but it’s not forever.",
+          "attribution": "Francis & Lisa Chan, You and Me Forever"
+        }
+      ],
       "ai_use_cases": [
         "Couples stuck in trivial fights — shift focus to mission.",
         "When a couple asks about the purpose of marriage.",
@@ -300,6 +317,21 @@
       ],
       "citations": ["Ephesians 5:22-33", "1 Peter 3:1-7"],
       "author_tone": "Direct, practical; structured around gender differences.",
+      "chapter_themes": [
+        "The Crazy Cycle (without love/respect)",
+        "The Energizing Cycle (love motivates respect; respect motivates love)",
+        "Practical languages of respect and love"
+      ],
+      "diagnostics": [
+        "Are we in the Crazy Cycle right now? What unloving or disrespectful behavior am I adding?",
+        "How can I proactively energize the cycle for my spouse today?"
+      ],
+      "memorable_quotes": [
+        {
+          "text": "His love motivates her respect; her respect motivates his love.",
+          "attribution": "Emerson Eggerichs, Love & Respect"
+        }
+      ],
       "ai_use_cases": [
         "When a spouse says: I don’t feel loved/respected.",
         "When communication has broken down due to reaction cycles."
@@ -342,6 +374,34 @@
       ],
       "citations": ["Genesis 2:18-25", "Ephesians 5:21-33", "1 Corinthians 13"],
       "author_tone": "Theological yet warm; pastoral with intellectual depth.",
+      "chapter_themes": [
+        "Covenant vs. consumer marriage",
+        "The power for marriage: the gospel",
+        "The essence of marriage is friendship",
+        "Truth in love and deep change",
+        "The mission of marriage",
+        "Singleness and the gift of marriage",
+        "Sex and the covenant"
+      ],
+      "diagnostics": [
+        "Are we relating as covenant partners or as consumers?",
+        "Where are we neglecting spiritual friendship (time, vulnerability, mission)?",
+        "Do we default to truth-without-love or love-without-truth? Where today?"
+      ],
+      "memorable_quotes": [
+        {
+          "text": "To be loved but not known is comforting but superficial; to be known and not loved is our greatest fear. But to be fully known and truly loved is, well, a lot like being loved by God.",
+          "attribution": "Timothy Keller, The Meaning of Marriage"
+        },
+        {
+          "text": "Marriage is a major vehicle for the sanctification of our selfish natures.",
+          "attribution": "Timothy Keller, The Meaning of Marriage"
+        },
+        {
+          "text": "You never marry the right person.",
+          "attribution": "Timothy Keller, The Meaning of Marriage"
+        }
+      ],
       "ai_use_cases": [
         "Couples exploring the biblical meaning of marriage.",
         "When a spouse feels the marriage is just a contract."
@@ -369,6 +429,24 @@
       ],
       "citations": ["James 1:2-4", "Philippians 2:3-4", "1 Corinthians 13:4-7", "Romans 8:29"],
       "author_tone": "Challenging, reflective, spiritually formative.",
+      "chapter_themes": [
+        "Holiness over happiness",
+        "Spiritual disciplines forged in marriage",
+        "Learning to serve and be sanctified",
+        "Facing disappointment and growth",
+        "Sex as covenant celebration"
+      ],
+      "diagnostics": [
+        "How might God be using this tension to make me holy?",
+        "What selfish desire is the Spirit inviting me to surrender today?",
+        "Where can I practice small acts of service in irritation?"
+      ],
+      "memorable_quotes": [
+        {
+          "text": "What if God designed marriage to make us holy more than to make us happy?",
+          "attribution": "Gary Thomas, Sacred Marriage"
+        }
+      ],
       "ai_use_cases": [
         "Couples disillusioned by hardship.",
         "Encourage a growth mindset in conflict seasons."
@@ -478,6 +556,22 @@
       ],
       "citations": ["Song of Songs 8:6-7", "Proverbs 5:18-19", "Hebrews 13:4", "1 Thessalonians 4:3-4"],
       "author_tone": "Biblical exposition with cultural application.",
+      "chapter_themes": [
+        "Attraction and character",
+        "Courtship and covenant commitment",
+        "Conflict, reconciliation, and forgiveness",
+        "Celebration of sexual intimacy in marriage"
+      ],
+      "diagnostics": [
+        "Are we pursuing intimacy across spiritual, emotional, and physical dimensions?",
+        "Where do we need confession and reconciliation to restore desire?"
+      ],
+      "memorable_quotes": [
+        {
+          "text": "Many waters cannot quench love, neither can floods drown it.",
+          "attribution": "Song of Songs 8:7 (theme echoed in The Mingling of Souls)"
+        }
+      ],
       "ai_use_cases": [
         "Couples struggling with intimacy.",
         "Premarital counselling on God’s design for sex."
@@ -504,6 +598,26 @@
       ],
       "citations": ["James 4:1-2", "Romans 12:18", "Matthew 7:3-5", "Ephesians 4:2-3", "Colossians 3:13"],
       "author_tone": "Honest, convicting, grace-filled.",
+      "chapter_themes": [
+        "Six gospel commitments (confession, growth, trust, love, differences, protection)",
+        "War of desires and worship",
+        "Daily discipleship in the ordinary"
+      ],
+      "diagnostics": [
+        "Where am I the biggest problem in my marriage right now?",
+        "What daily confession needs to happen today?",
+        "What expectations are ruling my heart?"
+      ],
+      "memorable_quotes": [
+        {
+          "text": "No one gives grace better than the person who is deeply persuaded that he needs it as well.",
+          "attribution": "Paul David Tripp, What Did You Expect? / Marriage: 6 Gospel Commitments"
+        },
+        {
+          "text": "I am my biggest marriage problem.",
+          "attribution": "Paul David Tripp"
+        }
+      ],
       "ai_use_cases": [
         "Couples blaming each other.",
         "When bitterness or disillusionment has set in."
@@ -553,6 +667,23 @@
       ],
       "citations": ["Galatians 6:5", "Proverbs 4:23", "Matthew 18:15-17", "Ephesians 4:25", "Proverbs 27:17"],
       "author_tone": "Therapeutic but biblically anchored.",
+      "chapter_themes": [
+        "Ownership and responsibility",
+        "Freedom, limits, and consequences",
+        "Honesty and respect in communication",
+        "Protecting the marriage from harmful patterns and people"
+      ],
+      "diagnostics": [
+        "What am I responsible for here (and what am I not)?",
+        "Where do I need to say a loving but firm no?",
+        "Am I enabling sin or avoiding consequences?"
+      ],
+      "memorable_quotes": [
+        {
+          "text": "Boundaries define us.",
+          "attribution": "Henry Cloud & John Townsend"
+        }
+      ],
       "ai_use_cases": [
         "Overreach, control, or outside interference issues.",
         "Teaching responsibility with love."

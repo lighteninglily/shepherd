@@ -104,7 +104,7 @@ export default ComponentName;
 import axios from 'axios';
 
 const apiClient = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL,
+  baseURL: process.env.NEXT_PUBLIC_API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -213,7 +213,7 @@ npm start
 
 ### Environment Variables
 ```bash
-NEXT_PUBLIC_API_URL=https://api.shepherd.ai
+NEXT_PUBLIC_API_BASE_URL=https://api.shepherd.ai
 NEXT_PUBLIC_GA_MEASUREMENT_ID=G-XXXXXXXXXX
 ```
 

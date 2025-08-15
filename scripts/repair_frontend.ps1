@@ -40,6 +40,12 @@ $lock = Join-Path $frontendDir "package-lock.json"
 if (Test-Path $nm) { Write-Host "[Frontend] Removing node_modules"; Remove-Item $nm -Recurse -Force -ErrorAction SilentlyContinue }
 if (Test-Path $lock) { Write-Host "[Frontend] Removing package-lock.json"; Remove-Item $lock -Force -ErrorAction SilentlyContinue }
 
+# Clean stale Next.js build artifacts that may be locked by Dropbox/watchers
+$nextDir = Join-Path $frontendDir ".next"
+$nextDevDir = Join-Path $frontendDir ".next-dev"
+if (Test-Path $nextDir) { Write-Host "[Frontend] Removing .next"; Remove-Item $nextDir -Recurse -Force -ErrorAction SilentlyContinue }
+if (Test-Path $nextDevDir) { Write-Host "[Frontend] Removing .next-dev"; Remove-Item $nextDevDir -Recurse -Force -ErrorAction SilentlyContinue }
+
 # Clean npm cache
 & $npm cache clean --force
 
